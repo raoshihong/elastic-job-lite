@@ -69,7 +69,7 @@ public final class ZookeeperRegistryCenter implements CoordinatorRegistryCenter 
     @Override
     public void init() {
         log.debug("Elastic job: zookeeper registry center init, server lists is: {}.", zkConfig.getServerLists());
-        //通过curator连接zookeeper服务
+        //通过curator连接zookeeper服务，通过客户端CuratorFramework的实现了连接zookeeper服务
         CuratorFrameworkFactory.Builder builder = CuratorFrameworkFactory.builder()
                 .connectString(zkConfig.getServerLists())
                 .retryPolicy(new ExponentialBackoffRetry(zkConfig.getBaseSleepTimeMilliseconds(), zkConfig.getMaxRetries(), zkConfig.getMaxSleepTimeMilliseconds()))
@@ -204,6 +204,7 @@ public final class ZookeeperRegistryCenter implements CoordinatorRegistryCenter 
     @Override
     public boolean isExisted(final String key) {
         try {
+            //在这里forPath方法会在zookeeper中创建这个path节点
             return null != client.checkExists().forPath(key);
         //CHECKSTYLE:OFF
         } catch (final Exception ex) {

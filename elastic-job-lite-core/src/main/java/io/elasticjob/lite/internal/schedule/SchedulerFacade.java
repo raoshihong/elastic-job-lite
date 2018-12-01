@@ -100,6 +100,7 @@ public final class SchedulerFacade {
      * @return 更新后的作业配置
      */
     public LiteJobConfiguration updateJobConfiguration(final LiteJobConfiguration liteJobConfig) {
+        //将作业任务配置持久化到zookeeper节点中
         configService.persist(liteJobConfig);
         return configService.load(false);
     }
