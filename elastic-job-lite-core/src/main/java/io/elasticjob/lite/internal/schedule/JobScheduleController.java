@@ -30,6 +30,7 @@ import org.quartz.TriggerKey;
 
 /**
  * 作业调度控制器.
+ * 在这里真正调用quartz的调度,创建quartz的jobDetail,scheduler,trigger
  * 
  * @author zhangliang
  */
@@ -49,9 +50,11 @@ public final class JobScheduleController {
      */
     public void scheduleJob(final String cron) {
         try {
-            if (!scheduler.checkExists(jobDetail.getKey())) {
+            if (!scheduler.checkExists(jobDetail.getKey())) {//没有则使用默认的触发器
+                //绑定quartz的jobDetail和trigger
                 scheduler.scheduleJob(jobDetail, createTrigger(cron));
             }
+            //调度任务
             scheduler.start();
         } catch (final SchedulerException ex) {
             throw new JobSystemException(ex);

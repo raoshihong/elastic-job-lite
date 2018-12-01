@@ -46,6 +46,7 @@ public abstract class AbstractJobBeanDefinitionParser extends AbstractBeanDefini
     @Override
     protected AbstractBeanDefinition parseInternal(final Element element, final ParserContext parserContext) {
         BeanDefinitionBuilder factory = BeanDefinitionBuilder.rootBeanDefinition(SpringJobScheduler.class);
+        //在这里指明了init的初始化方法名为init方法,所以在初始化SpringJobScheduler时,就会调用JobScheduler的init方法
         factory.setInitMethodName("init");
         //TODO 抽象子类
         if ("".equals(element.getAttribute(BaseJobBeanDefinitionParserTag.JOB_REF_ATTRIBUTE))) {

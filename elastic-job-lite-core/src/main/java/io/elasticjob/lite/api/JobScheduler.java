@@ -79,6 +79,7 @@ public class JobScheduler {
     }
     
     private JobScheduler(final CoordinatorRegistryCenter regCenter, final LiteJobConfiguration liteJobConfig, final JobEventBus jobEventBus, final ElasticJobListener... elasticJobListeners) {
+        //JobInstance创建一个job实例,包括job的唯一id,job服务器的ip
         JobRegistry.getInstance().addJobInstance(liteJobConfig.getJobName(), new JobInstance());
         this.liteJobConfig = liteJobConfig;
         this.regCenter = regCenter;
@@ -99,22 +100,45 @@ public class JobScheduler {
     
     /**
      * 初始化作业.
+     * 因为在自定义解析器io.elasticjob.lite.spring.job.parser.common.AbstractJobBeanDefinitionParser中
+     * 设置了初始化方法的名称为init,所以在spring初始化bean时,会调用这里的init方法进行作业初始化并启动作业
      */
     public void init() {
+        //获取job的配置,并将job的配置信息保存到zookeeper中
         LiteJobConfiguration liteJobConfigFromRegCenter = schedulerFacade.updateJobConfiguration(liteJobConfig);
+        //将job的配置信息保存到任务注册中心去,这是个单利,实际就是存到缓存中
         JobRegistry.getInstance().setCurrentShardingTotalCount(liteJobConfigFromRegCenter.getJobName(), liteJobConfigFromRegCenter.getTypeConfig().getCoreConfig().getShardingTotalCount());
+
+        //创建job调度控制器,JobScheduleController包装了quartz的三个关键部分jobDetail,trigger,scheduler
+        //所以这里调用了createScheduler,createJobDetail方法
         JobScheduleController jobScheduleController = new JobScheduleController(
                 createScheduler(), createJobDetail(liteJobConfigFromRegCenter.getTypeConfig().getJobClass()), liteJobConfigFromRegCenter.getJobName());
+        //将job注册到缓存中,并将任务节点保存到zookeeper中
         JobRegistry.getInstance().registerJob(liteJobConfigFromRegCenter.getJobName(), jobScheduleController, regCenter);
+
+        //注册作业启动信息
         schedulerFacade.registerStartUpInfo(!liteJobConfigFromRegCenter.isDisabled());
+
+        //在这里开始调度任务,通过quartz框架调用真实的任务
         jobScheduleController.scheduleJob(liteJobConfigFromRegCenter.getTypeConfig().getCoreConfig().getCron());
     }
-    
+
+    /**
+     * 创建JobDetail时,将Elastict-job自定义的ElasticJob实例保存起来,比如SimpleJob的实例
+     * 同时将JobFacade保存起来,通JobFacade可以获取jobConfiguration相关的配置
+     * @param jobClass
+     * @return
+     */
     private JobDetail createJobDetail(final String jobClass) {
+        //在这里创建quartz的JobDetail，可以看到,是将LiteJob这个任务填充到JobDetail中的,而LiteJob刚好符合quartz的job定义,即实现Job接口和execute方法
+        //所以可以大概的知道在Elastic-Job中实际只定义了一个Quartz的Job任务，而再通过elastic-job定义的不同类型的自己的实体job,来处理自己的事物
         JobDetail result = JobBuilder.newJob(LiteJob.class).withIdentity(liteJobConfig.getJobName()).build();
+
+        //将jobFacade保存到jobDetail中
         result.getJobDataMap().put(JOB_FACADE_DATA_MAP_KEY, jobFacade);
         Optional<ElasticJob> elasticJobInstance = createElasticJobInstance();
         if (elasticJobInstance.isPresent()) {
+            //将ElasticJob保存到JobDetail中,执行job任务时,会自动带入到job对象中
             result.getJobDataMap().put(ELASTIC_JOB_DATA_MAP_KEY, elasticJobInstance.get());
         } else if (!jobClass.equals(ScriptJob.class.getCanonicalName())) {
             try {
@@ -133,6 +157,7 @@ public class JobScheduler {
     private Scheduler createScheduler() {
         Scheduler result;
         try {
+            //采用的是StdSchedulerFactory
             StdSchedulerFactory factory = new StdSchedulerFactory();
             factory.initialize(getBaseQuartzProperties());
             result = factory.getScheduler();

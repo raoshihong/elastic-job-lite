@@ -47,7 +47,7 @@ import java.util.Map;
  * @author zhangliang
  */
 @Slf4j
-public final class ShardingService {
+public final class ShardingService {//分片服务是在运行job时才分片,这样在一个分片出错了，才会发现并重新分片
     
     private final String jobName;
     
@@ -100,6 +100,7 @@ public final class ShardingService {
      * </p>
      */
     public void shardingIfNecessary() {
+        //获取可用的job实例
         List<JobInstance> availableJobInstances = instanceService.getAvailableJobInstances();
         if (!isNeedSharding() || availableJobInstances.isEmpty()) {
             return;

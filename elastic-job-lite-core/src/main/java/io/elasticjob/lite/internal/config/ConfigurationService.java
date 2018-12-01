@@ -38,6 +38,7 @@ public final class ConfigurationService {
     private final JobNodeStorage jobNodeStorage;
     
     public ConfigurationService(final CoordinatorRegistryCenter regCenter, final String jobName) {
+        //创建时,就将对应的信息保存到zookeeper中
         jobNodeStorage = new JobNodeStorage(regCenter, jobName);
         timeService = new TimeService();
     }
@@ -99,10 +100,12 @@ public final class ConfigurationService {
      * @throws JobExecutionEnvironmentException 本机与注册中心的时间误差秒数不在允许范围所抛出的异常
      */
     public void checkMaxTimeDiffSecondsTolerable() throws JobExecutionEnvironmentException {
+        //从配置中获取设置的最大偏差时间
         int maxTimeDiffSeconds =  load(true).getMaxTimeDiffSeconds();
         if (-1  == maxTimeDiffSeconds) {
             return;
         }
+        //通过当前本机的时间与注册中心的时间
         long timeDiff = Math.abs(timeService.getCurrentMillis() - jobNodeStorage.getRegistryCenterTime());
         if (timeDiff > maxTimeDiffSeconds * 1000L) {
             throw new JobExecutionEnvironmentException(

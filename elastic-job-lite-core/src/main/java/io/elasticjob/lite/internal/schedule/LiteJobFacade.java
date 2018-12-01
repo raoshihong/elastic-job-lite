@@ -105,13 +105,16 @@ public final class LiteJobFacade implements JobFacade {
     
     @Override
     public ShardingContexts getShardingContexts() {
+        //是否设置了故障转移
         boolean isFailover = configService.load(true).isFailover();
         if (isFailover) {
+            //获取本地分片主机
             List<Integer> failoverShardingItems = failoverService.getLocalFailoverItems();
             if (!failoverShardingItems.isEmpty()) {
                 return executionContextService.getJobShardingContext(failoverShardingItems);
             }
         }
+        //在这里进行策略的分片,是否需要分片
         shardingService.shardingIfNecessary();
         List<Integer> shardingItems = shardingService.getLocalShardingItems();
         if (isFailover) {

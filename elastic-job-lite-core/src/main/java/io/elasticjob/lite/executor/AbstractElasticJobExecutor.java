@@ -39,7 +39,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
 /**
- * 弹性化分布式作业执行器.
+ * 弹性化分布式作业执行器. 执行任务的核心部分
  *
  * @author zhangliang
  */
@@ -96,10 +96,14 @@ public abstract class AbstractElasticJobExecutor {
      */
     public final void execute() {
         try {
+            //检测运行环境十分运行,比如本机时间与注册中心时间差是否在指定范围内
             jobFacade.checkJobExecutionEnvironment();
         } catch (final JobExecutionEnvironmentException cause) {
+            //异常处理器
             jobExceptionHandler.handleException(jobName, cause);
         }
+
+        //分片规则的处理
         ShardingContexts shardingContexts = jobFacade.getShardingContexts();
         if (shardingContexts.isAllowSendJobEvent()) {
             jobFacade.postJobStatusTraceEvent(shardingContexts.getTaskId(), State.TASK_STAGING, String.format("Job '%s' execute begin.", jobName));
@@ -113,19 +117,25 @@ public abstract class AbstractElasticJobExecutor {
             return;
         }
         try {
+            //任务执行前的处理
             jobFacade.beforeJobExecuted(shardingContexts);
             //CHECKSTYLE:OFF
         } catch (final Throwable cause) {
             //CHECKSTYLE:ON
             jobExceptionHandler.handleException(jobName, cause);
         }
+
+        //执行任务
         execute(shardingContexts, JobExecutionEvent.ExecutionSource.NORMAL_TRIGGER);
         while (jobFacade.isExecuteMisfired(shardingContexts.getShardingItemParameters().keySet())) {
             jobFacade.clearMisfire(shardingContexts.getShardingItemParameters().keySet());
+            //如果有分片,则需要进行分片执行
             execute(shardingContexts, JobExecutionEvent.ExecutionSource.MISFIRE);
         }
         jobFacade.failoverIfNecessary();
         try {
+
+            //任务执行后的处理
             jobFacade.afterJobExecuted(shardingContexts);
             //CHECKSTYLE:OFF
         } catch (final Throwable cause) {

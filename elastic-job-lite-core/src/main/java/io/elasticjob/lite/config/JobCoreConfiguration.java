@@ -33,7 +33,10 @@ import lombok.RequiredArgsConstructor;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
 public final class JobCoreConfiguration {
-    
+
+    /**
+     * job名称
+     */
     private final String jobName;
     
     private final String cron;

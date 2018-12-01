@@ -34,7 +34,8 @@ public final class JobEventBus {
     private final JobEventConfiguration jobEventConfig;
     
     private final ExecutorServiceObject executorServiceObject;
-    
+
+    //使用了google的eventBus
     private final EventBus eventBus;
     
     private boolean isRegistered;

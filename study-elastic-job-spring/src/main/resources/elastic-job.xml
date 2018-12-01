@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:reg="http://www.dangdang.com/schema/ddframe/reg"
+       xmlns:job="http://www.dangdang.com/schema/ddframe/job"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                        http://www.springframework.org/schema/beans/spring-beans.xsd
+                        http://www.dangdang.com/schema/ddframe/reg
+                        http://www.dangdang.com/schema/ddframe/reg/reg.xsd
+                        http://www.dangdang.com/schema/ddframe/job
+                        http://www.dangdang.com/schema/ddframe/job/job.xsd
+                        ">
+    <!--配置作业注册中心
+    参数解析,
+    server-lists表示zookeeper服务的地址,可以有多个用逗号分隔,如:host1:2181
+    namespace 在zookeeper中的顶节点,
+    base-sleep-time-milliseconds 最小睡眠时间
+    max-sleep-time-milliseconds 最大睡眠时间,
+    max-retries 最大重试次数
+
+    对应着ZookeeperConfiguration-->
+    <reg:zookeeper id="regCenter" server-lists="localhost:2181" namespace="dd-job-study" base-sleep-time-milliseconds="1000" max-sleep-time-milliseconds="3000" max-retries="3" />
+
+    <!-- 配置作业 simple 表示一个SimpleJob
+    id 为job的唯一标识
+    class 指定job的类全路径
+    registry-center-ref 指定注册中心
+    cron 时间规则表达式 秒,分,时,天,月,年 0/10 * * * * ? 表示从0秒开始，每个10秒执行一次
+    sharding-total-count 分片总数 3,表示分了三个片
+    sharding-item-parameters 个性化参数,为分片项命名别名
+
+    对应着SimpleJobConfiguration-->
+    <job:simple id="oneOffElasticJob" class="com.rao.study.elasticjob.spring.job.MyElasticJob" registry-center-ref="regCenter" cron="0/10 * * * * ?" sharding-total-count="3" sharding-item-parameters="0=A,1=B,2=C" />
+</beans>

@@ -37,11 +37,14 @@ public final class LiteJobConfiguration implements JobRootConfiguration {
     private final boolean monitorExecution;
     
     private final int maxTimeDiffSeconds;
-    
+
+    //监听端口,可以利用dump命令查看任务的信息,并进行分析
     private final int monitorPort;
-    
+
+    //job的分片策略,使用类的全路径,可以定义自己的分片策略
     private final String jobShardingStrategyClass;
-    
+
+    //自检断修复
     private final int reconcileIntervalMinutes;
     
     private final boolean disabled;
@@ -92,7 +95,7 @@ public final class LiteJobConfiguration implements JobRootConfiguration {
         private boolean disabled;
         
         private boolean overwrite;
-        
+
         private int reconcileIntervalMinutes = 10;
     
         /**

@@ -72,6 +72,7 @@ public final class JobRegistry {
     public void registerJob(final String jobName, final JobScheduleController jobScheduleController, final CoordinatorRegistryCenter regCenter) {
         schedulerMap.put(jobName, jobScheduleController);
         regCenterMap.put(jobName, regCenter);
+        //通过这里讲任务注册到zookeeper中,添加一个对应的任务节点
         regCenter.addCacheData("/" + jobName);
     }
     
